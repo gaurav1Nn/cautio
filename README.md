@@ -1,24 +1,49 @@
 # HangOut & Hangman 🎮
 
-A real-time multiplayer Hangman game built with Node.js, Express, Socket.IO, and MongoDB.
+A real-time multiplayer Hangman game built with Node.js, Express, Socket.IO, MongoDB, and React.
+
+## Project Structure
+
+```
+cautio/
+├── backend/              # Node.js + Express + Socket.IO
+│   ├── src/
+│   │   ├── config/       # Database, Socket, Environment config
+│   │   ├── controllers/  # Route handlers
+│   │   ├── middleware/   # Auth, validation, rate limiting
+│   │   ├── models/       # Mongoose schemas
+│   │   ├── routes/       # API routes
+│   │   ├── services/     # Business logic
+│   │   ├── socket/       # Socket.IO event handlers
+│   │   └── utils/        # Helpers and constants
+│   └── server.js
+├── frontend/             # React + Vite
+│   └── src/
+│       ├── components/   # React components
+│       ├── pages/        # Page components
+│       └── services/     # API and Socket services
+└── package.json          # Monorepo scripts
+```
 
 ## Features
 
-- 🔐 **JWT Authentication** - Secure access/refresh token system
-- 🏠 **Game Rooms** - Create and join rooms with optional passwords
+- 🔐 **JWT Authentication** - Access/refresh token system
+- 🏠 **Game Rooms** - Create and join with optional passwords
 - 🎯 **Real-time Gameplay** - Live updates via Socket.IO
-- 📊 **Leaderboards** - Global, weekly, and monthly rankings
-- 💬 **In-game Chat** - Real-time messaging in rooms
+- 📊 **Leaderboards** - Global, weekly, monthly rankings
+- 💬 **In-game Chat** - Real-time messaging
 - 💡 **Hint System** - Word masters can send hints
 - 📁 **Categories** - Words from various themes
 
 ## Tech Stack
 
-- **Backend**: Node.js + Express
-- **Real-time**: Socket.IO
-- **Database**: MongoDB with Mongoose
-- **Auth**: JWT (Access + Refresh tokens)
-- **Security**: bcrypt, helmet, rate limiting
+| Layer | Technology |
+|-------|------------|
+| Backend | Node.js, Express, Socket.IO |
+| Database | MongoDB, Mongoose |
+| Frontend | React, Vite |
+| Auth | JWT (Access + Refresh) |
+| Real-time | Socket.IO |
 
 ## Getting Started
 
@@ -29,36 +54,37 @@ A real-time multiplayer Hangman game built with Node.js, Express, Socket.IO, and
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/gaurav1Nn/cautio.git
-   cd cautio
-   ```
+```bash
+# Clone the repo
+git clone https://github.com/gaurav1Nn/cautio.git
+cd cautio
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+# Install all dependencies
+npm run install:all
 
-3. Create environment file:
-   ```bash
-   cp .env.example .env
-   ```
+# Setup environment files
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
 
-4. Update `.env` with your configuration
+### Development
 
-5. Start the development server:
-   ```bash
-   npm run dev
-   ```
+```bash
+# Run both frontend and backend
+npm run dev
+
+# Or run separately
+npm run dev:backend    # Backend on port 3000
+npm run dev:frontend   # Frontend on port 5173
+```
 
 ## API Documentation
 
-API documentation will be available at `/api/docs` after Phase 9.
+Coming in Phase 9 (Swagger + Postman)
 
 ## Project Status
 
-🚧 **Under Development** - Building in phases
+🚧 **Building in Phases** - See implementation plan for details
 
 ## License
 
