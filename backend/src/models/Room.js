@@ -116,14 +116,18 @@ roomSchema.methods.isFull = function () {
     return this.players.length >= this.settings.maxPlayers;
 };
 
-// Check if user is in room
+// Check if user is in room (handles both populated and non-populated)
 roomSchema.methods.hasPlayer = function (userId) {
-    return this.players.some((player) => player.toString() === userId.toString());
+    return this.players.some((player) => {
+        const playerId = player._id || player;  // Handle populated or raw ObjectId
+        return playerId.toString() === userId.toString();
+    });
 };
 
-// Check if user is host
+// Check if user is host (handles both populated and non-populated)
 roomSchema.methods.isHost = function (userId) {
-    return this.host.toString() === userId.toString();
+    const hostId = this.host._id || this.host;  // Handle populated or raw ObjectId
+    return hostId.toString() === userId.toString();
 };
 
 // Get public room info

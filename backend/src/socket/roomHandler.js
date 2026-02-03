@@ -16,7 +16,8 @@ module.exports = (io, socket) => {
     socket.on('room:join', async ({ roomId }) => {
         try {
             const room = await Room.findOne({ roomId })
-                .populate('players', 'username avatar isOnline');
+                .populate('players', 'username avatar isOnline')
+                .populate('host', 'username avatar');
 
             if (!room) {
                 return socket.emit('error', { message: 'Room not found' });
@@ -30,16 +31,18 @@ module.exports = (io, socket) => {
             const previousRoom = userRooms.get(userId);
             if (previousRoom && previousRoom !== roomId) {
                 socket.leave(previousRoom);
+                console.log(`[room:join] Left previous room ${previousRoom}`);
             }
 
             // Join socket room
             socket.join(roomId);
             userRooms.set(userId, roomId);
+            console.log(`[room:join] User ${userId} successfully joined socket room ${roomId}`);
 
             // Notify others
             socket.to(roomId).emit('room:player-joined', {
                 player: {
-                    id: socket.user._id,
+                    _id: socket.user._id,  // Frontend expects _id, not id
                     username: socket.user.username,
                     avatar: socket.user.avatar,
                 },
@@ -77,10 +80,8 @@ module.exports = (io, socket) => {
 
             if (room) {
                 socket.to(roomId).emit('room:player-left', {
-                    player: {
-                        id: socket.user._id,
-                        username: socket.user.username,
-                    },
+                    playerId: socket.user._id,  // Already correct - frontend expects playerId
+                    username: socket.user.username,
                     playerCount: Math.max(0, room.players.length - 1),
                 });
             }
@@ -173,7 +174,7 @@ module.exports = (io, socket) => {
         if (roomId) {
             socket.to(roomId).emit('room:player-disconnected', {
                 player: {
-                    id: socket.user._id,
+                    _id: socket.user._id,  // Frontend expects _id
                     username: socket.user.username,
                 },
             });

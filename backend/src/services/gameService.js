@@ -23,8 +23,29 @@ const startGame = async (roomId, io) => {
         throw new Error(`Minimum ${GAME.MIN_PLAYERS} players required to start`);
     }
 
-    if (room.status === ROOM_STATUS.PLAYING) {
-        throw new Error('Game already in progress');
+    // Check if there's an ACTIVE game (not just if status is playing)
+    if (room.currentGame) {
+        const existingGame = await Game.findById(room.currentGame);
+        console.log('[startGame] Existing game found:', {
+            gameId: room.currentGame,
+            gameStatus: existingGame?.status,
+            isFinished: existingGame?.status === GAME_STATUS.FINISHED
+        });
+
+        if (existingGame && existingGame.status !== GAME_STATUS.FINISHED) {
+            // FOR DEVELOPMENT: Force clear stale games
+            console.log('[startGame] Force clearing stale game');
+            room.currentGame = null;
+            room.status = ROOM_STATUS.WAITING;
+            await room.save();
+            // In production, uncomment this:
+            // throw new Error('Game already in progress');
+        } else {
+            // Old game finished, clear it
+            room.currentGame = null;
+            room.status = ROOM_STATUS.WAITING;
+            await room.save();
+        }
     }
 
     // Create player scores array

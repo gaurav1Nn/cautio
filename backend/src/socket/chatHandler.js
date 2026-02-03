@@ -22,14 +22,12 @@ module.exports = (io, socket) => {
             // Limit message length
             const trimmedMessage = message.substring(0, 200);
 
-            // Broadcast to room
+            // Broadcast to room (frontend expects userId, username, avatar at top level)
             io.to(roomId).emit('chat:broadcast', {
                 id: Date.now(),
-                user: {
-                    id: socket.user._id,
-                    username: socket.user.username,
-                    avatar: socket.user.avatar,
-                },
+                userId: socket.user._id,
+                username: socket.user.username,
+                avatar: socket.user.avatar,
                 message: trimmedMessage,
                 timestamp: new Date().toISOString(),
             });

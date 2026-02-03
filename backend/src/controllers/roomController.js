@@ -193,18 +193,31 @@ const joinRoom = async (req, res) => {
         }
 
         // Check if room is in playing state
-        if (room.status === 'playing') {
+        if (room.status === 'playing' && !room.hasPlayer(userId)) {
             return res.status(400).json({
                 success: false,
                 message: 'Cannot join a room with a game in progress',
             });
         }
 
-        // Check if already in room
+        // Check if already in room - return success (idempotent join)
         if (room.hasPlayer(userId)) {
-            return res.status(400).json({
-                success: false,
-                message: 'You are already in this room',
+            await room.populate('host', 'username avatar');
+            await room.populate('players', 'username avatar isOnline');
+            return res.json({
+                success: true,
+                message: 'Already in room',
+                data: {
+                    room: {
+                        roomId: room.roomId,
+                        name: room.name,
+                        host: room.host,
+                        players: room.players,
+                        isPrivate: room.isPrivate,
+                        settings: room.settings,
+                        status: room.status,
+                    },
+                },
             });
         }
 

@@ -32,13 +32,8 @@ const signupSchema = Joi.object({
             'string.max': 'Password cannot exceed 128 characters',
             'any.required': 'Password is required',
         }),
-    confirmPassword: Joi.string()
-        .valid(Joi.ref('password'))
-        .required()
-        .messages({
-            'any.only': 'Passwords do not match',
-            'any.required': 'Please confirm your password',
-        }),
+    // confirmPassword is validated on frontend, optional here
+    confirmPassword: Joi.string().optional(),
 });
 
 const loginSchema = Joi.object({

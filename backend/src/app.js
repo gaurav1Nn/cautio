@@ -72,6 +72,12 @@ app.get('/api', (_req, res) => {
     });
 });
 
+// Serve test client
+const path = require('path');
+app.get('/test', (_req, res) => {
+    res.sendFile(path.join(__dirname, '../test-client.html'));
+});
+
 // 404 handler
 app.use((_req, res) => {
     res.status(404).json({

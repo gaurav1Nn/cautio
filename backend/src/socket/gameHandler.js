@@ -29,6 +29,16 @@ module.exports = (io, socket) => {
             await game.populate('players.user', 'username avatar');
             await game.populate('currentTurn', 'username avatar');
 
+            console.log('[game:start] Emitting events to room:', roomId);
+            console.log('[game:start] Word Master:', game.wordMaster);
+
+            // Debug: Check who's in the room
+            const socketsInRoom = await io.in(roomId).fetchSockets();
+            console.log('[game:start] Sockets in room:', socketsInRoom.length);
+            socketsInRoom.forEach(s => {
+                console.log('  - Socket:', s.id, 'User:', s.user?.username);
+            });
+
             // Broadcast game start
             io.to(roomId).emit('game:start', {
                 game: game.getPublicState(null),
@@ -49,34 +59,97 @@ module.exports = (io, socket) => {
     });
 
     /**
-     * Submit word (Word Master)
+     * Submit word (Word Master) - frontend emits game:word-set
      */
-    socket.on('game:submit-word', async ({ gameId, word, category, useRandom }) => {
+    socket.on('game:word-set', async ({ roomId, word, category, hint }) => {
         try {
-            const game = await gameService.submitWord(gameId, userId, word, category, useRandom);
+            // Find the room first
+            const room = await Room.findOne({ roomId });
+            if (!room) {
+                return socket.emit('error', { message: 'Room not found' });
+            }
 
-            const roomId = socket.getCurrentRoom?.() || (await Room.findById(game.room))?.roomId;
-
-            await game.populate('wordMaster', 'username avatar');
-            await game.populate('currentTurn', 'username avatar');
-
-            // Broadcast word set (without revealing word)
-            io.to(roomId).emit('game:word-set', {
-                wordLength: game.wordLength,
-                category: game.category,
-                currentTurn: game.currentTurn,
-                maskedWord: game.getMaskedWord(),
-                message: 'Word has been set! Let the guessing begin!',
+            // Find active game for this room
+            const game = await Game.findOne({
+                room: room._id,
+                status: { $in: [GAME_STATUS.WORD_SELECTION, GAME_STATUS.IN_PROGRESS] }
             });
 
-            // Start turn timer
-            gameService.startTurnTimer(gameId, io, roomId, game.turnTimeLimit);
+            if (!game) {
+                // No game exists yet - start one
+                const newGame = await gameService.startGame(roomId, io);
 
-            // Send full game state to each player
-            for (const player of game.players) {
-                const state = game.getPublicState(player.user.toString());
-                io.to(roomId).emit('game:state', { game: state });
+                // Now submit the word
+                const updatedGame = await gameService.submitWord(
+                    newGame._id,
+                    userId,
+                    word,
+                    category,
+                    !word // useRandom if no word provided
+                );
+
+                // Store hint if provided
+                if (hint && updatedGame) {
+                    updatedGame.hint = hint;
+                    await updatedGame.save();
+                }
+
+                await updatedGame.populate('wordMaster', 'username avatar');
+                await updatedGame.populate('currentTurn', 'username avatar');
+
+                // Broadcast word set (without revealing word)
+                io.to(roomId).emit('game:word-set', {
+                    wordLength: updatedGame.wordLength,
+                    category: updatedGame.category,
+                    currentTurn: updatedGame.currentTurn,
+                    maskedWord: updatedGame.getMaskedWord(),
+                    hint: hint || undefined,
+                    message: 'Word has been set! Let the guessing begin!',
+                });
+
+                // Broadcast game start to update GameRoom
+                io.to(roomId).emit('game:start', {
+                    game: updatedGame.getPublicState(null),
+                    wordMaster: updatedGame.wordMaster,
+                    message: 'Game started!',
+                });
+
+                // Start turn timer
+                gameService.startTurnTimer(updatedGame._id, io, roomId, updatedGame.turnTimeLimit);
+
+            } else {
+                // Game exists - just submit the word
+                const updatedGame = await gameService.submitWord(
+                    game._id,
+                    userId,
+                    word,
+                    category,
+                    !word
+                );
+
+                if (hint && updatedGame) {
+                    updatedGame.hint = hint;
+                    await updatedGame.save();
+                }
+
+                await updatedGame.populate('wordMaster', 'username avatar');
+                await updatedGame.populate('currentTurn', 'username avatar');
+
+                // Broadcast word set
+                io.to(roomId).emit('game:word-set', {
+                    wordLength: updatedGame.wordLength,
+                    category: updatedGame.category,
+                    currentTurn: updatedGame.currentTurn,
+                    maskedWord: updatedGame.getMaskedWord(),
+                    hint: hint || undefined,
+                    message: 'Word has been set! Let the guessing begin!',
+                });
+
+                // Start turn timer
+                gameService.startTurnTimer(game._id, io, roomId, updatedGame.turnTimeLimit);
             }
+
+            console.info(`Word submitted in room ${roomId} by ${socket.user?.username}`);
         } catch (error) {
             console.error('Submit word error:', error);
             socket.emit('error', { message: error.message });
@@ -86,15 +159,20 @@ module.exports = (io, socket) => {
     /**
      * Guess a letter
      */
-    socket.on('game:guess', async ({ gameId, letter }) => {
+    socket.on('game:guess', async ({ roomId, letter }) => {
         try {
+            // Find room first to get current game
+            const room = await Room.findOne({ roomId });
+            if (!room || !room.currentGame) {
+                return socket.emit('error', { message: 'No active game in this room' });
+            }
+
+            const gameId = room.currentGame;
             const { result, wordComplete, gameOver, game } = await gameService.guessLetter(
                 gameId,
                 userId,
                 letter
             );
-
-            const roomId = socket.getCurrentRoom?.() || (await Room.findById(game.room))?.roomId;
 
             // Broadcast letter result
             io.to(roomId).emit('game:letter-result', {
@@ -181,11 +259,16 @@ module.exports = (io, socket) => {
     /**
      * Send hint (Word Master)
      */
-    socket.on('game:send-hint', async ({ gameId, hint }) => {
+    socket.on('game:send-hint', async ({ roomId, hint }) => {
         try {
-            const game = await gameService.sendHint(gameId, userId, hint);
+            // Find room to get current game
+            const room = await Room.findOne({ roomId });
+            if (!room || !room.currentGame) {
+                return socket.emit('error', { message: 'No active game in this room' });
+            }
 
-            const roomId = socket.getCurrentRoom?.() || (await Room.findById(game.room))?.roomId;
+            const gameId = room.currentGame;
+            const game = await gameService.sendHint(gameId, userId, hint);
 
             io.to(roomId).emit('game:hint', {
                 hint,
@@ -231,7 +314,7 @@ module.exports = (io, socket) => {
             // Notify others
             io.to(roomId).emit('game:player-reconnected', {
                 player: {
-                    id: socket.user._id,
+                    _id: socket.user._id,  // Frontend expects _id
                     username: socket.user.username,
                 },
             });
@@ -266,7 +349,7 @@ module.exports = (io, socket) => {
         // Notify room
         io.to(roomId).emit('game:player-disconnected', {
             player: {
-                id: socket.user._id,
+                _id: socket.user._id,  // Frontend expects _id
                 username: socket.user.username,
             },
             gracePeriod: GAME.DISCONNECT_GRACE_PERIOD_MS / 1000,

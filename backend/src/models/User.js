@@ -56,9 +56,7 @@ const userSchema = new mongoose.Schema(
     }
 );
 
-// Index for efficient queries
-userSchema.index({ username: 1 });
-userSchema.index({ email: 1 });
+// Index for efficient queries (username and email already indexed via unique: true)
 userSchema.index({ 'stats.totalScore': -1 }); // For leaderboard
 
 // Hash password before saving
