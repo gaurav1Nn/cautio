@@ -47,7 +47,12 @@ app.get('/health', (_req, res) => {
     });
 });
 
-// API routes (to be added in later phases)
+// API Routes
+const authRoutes = require('./routes/authRoutes');
+
+app.use('/api/auth', authRoutes);
+
+// API info endpoint
 app.get('/api', (_req, res) => {
     res.json({
         message: 'Welcome to HangOut & Hangman API',
