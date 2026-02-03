@@ -49,8 +49,10 @@ app.get('/health', (_req, res) => {
 
 // API Routes
 const authRoutes = require('./routes/authRoutes');
+const roomRoutes = require('./routes/roomRoutes');
 
 app.use('/api/auth', authRoutes);
+app.use('/api/rooms', roomRoutes);
 
 // API info endpoint
 app.get('/api', (_req, res) => {
