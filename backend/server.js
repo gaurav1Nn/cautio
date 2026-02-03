@@ -10,9 +10,9 @@ const { connectDatabase, closeDatabase } = require('./src/config/db');
 // Create HTTP server
 const server = http.createServer(app);
 
-// Socket.IO will be initialized in Phase 6
-// const { initializeSocket } = require('./src/config/socket');
-// initializeSocket(server);
+// Initialize Socket.IO
+const { initializeSocket } = require('./src/config/socket');
+initializeSocket(server);
 
 // Graceful shutdown handler
 const gracefulShutdown = async (signal) => {
