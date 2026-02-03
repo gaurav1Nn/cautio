@@ -50,9 +50,13 @@ app.get('/health', (_req, res) => {
 // API Routes
 const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
+const gameRoutes = require('./routes/gameRoutes');
+const leaderboardRoutes = require('./routes/leaderboardRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/games', gameRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // API info endpoint
 app.get('/api', (_req, res) => {
