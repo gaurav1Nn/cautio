@@ -5,6 +5,7 @@
 const http = require('http');
 const app = require('./src/app');
 const env = require('./src/config/env');
+const { connectDatabase, closeDatabase } = require('./src/config/db');
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -13,21 +14,15 @@ const server = http.createServer(app);
 // const { initializeSocket } = require('./src/config/socket');
 // initializeSocket(server);
 
-// Database connection will be initialized in Phase 2
-// const { connectDatabase } = require('./src/config/db');
-
 // Graceful shutdown handler
-const gracefulShutdown = (signal) => {
+const gracefulShutdown = async (signal) => {
     console.info(`\n${signal} received. Shutting down gracefully...`);
 
-    server.close(() => {
+    server.close(async () => {
         console.info('HTTP server closed');
 
-        // Close database connection (to be added in Phase 2)
-        // mongoose.connection.close(false, () => {
-        //   console.info('MongoDB connection closed');
-        //   process.exit(0);
-        // });
+        // Close database connection
+        await closeDatabase();
 
         process.exit(0);
     });
@@ -58,8 +53,8 @@ process.on('unhandledRejection', (reason, promise) => {
 // Start server
 const startServer = async () => {
     try {
-        // Connect to database (to be added in Phase 2)
-        // await connectDatabase();
+        // Connect to database
+        await connectDatabase();
 
         server.listen(env.PORT, () => {
             console.info(`
