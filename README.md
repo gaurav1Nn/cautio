@@ -85,7 +85,7 @@ HangOut & Hangman is a multiplayer word-guessing game where players take turns b
 
 1. **Clone & Install**
 ```bash
-git clone <repository-url>
+git clone https://github.com/gaurav1Nn/cautio.git
 cd cautio/backend
 npm install
 ```
