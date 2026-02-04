@@ -100,7 +100,7 @@ NODE_ENV=development
 PORT=3000
 
 # Database
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/hangman-game
+MONGODB_URI=your mongo db url
 
 # JWT Secrets (Generate your own!)
 JWT_ACCESS_SECRET=your-secret-access-key-min-32-chars
