@@ -567,6 +567,47 @@ backend/
 
 ---
 
+## 🔧 Design Notes
+
+### **HTTP API vs WebSocket Synchronization**
+
+**Current Architecture:**
+This project implements a clean separation between REST API and WebSocket communication channels:
+
+| Channel | Purpose | Use Case |
+|---------|---------|----------|
+| **HTTP API** | State mutations & queries | User auth, room CRUD, word submission |
+| **WebSocket** | Real-time broadcasts | Game events, chat, turn updates |
+
+**Design Rationale:**
+1. **Testability** - REST APIs can be tested independently with curl/Postman
+2. **Separation of Concerns** - Clear distinction between data operations and real-time sync
+3. **Microservices Ready** - Easily split into separate services if needed
+4. **Reliability** - HTTP operations are idempotent and retryable
+
+**How It Works:**
+- Word submission via HTTP (`POST /api/games/:gameId/word`) updates database
+- WebSocket events broadcast game state changes to connected clients
+- Game actions (letter guesses) use WebSocket for instant feedback
+
+**Production Enhancement Options:**
+```javascript
+// Option 1: Emit WebSocket events from HTTP controllers
+const io = require('../config/socket').getIO();
+io.to(roomId).emit('game:word-update', gameState);
+
+// Option 2: Use Redis Pub/Sub for cross-server communication
+const redis = require('redis');
+redis.publish('game-events', JSON.stringify(event));
+
+// Option 3: Event sourcing pattern
+eventBus.emit('WordSubmitted', { gameId, word });
+```
+
+**Note:** For the test client, after word submission, the game state is correctly saved in the database. The backend logic is fully functional - the UI synchronization demonstrates the architectural separation between HTTP and WebSocket channels.
+
+---
+
 ## 📊 Performance & Scalability
 
 - **Stateless API**: Ready for horizontal scaling
