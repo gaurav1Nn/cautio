@@ -11,15 +11,18 @@ A production-ready, real-time multiplayer Hangman game backend built with Node.j
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Technology Stack](#technology-stack)
-- [Installation](#installation)
-- [Quick Start Testing](#quick-start-testing)
-- [API Documentation](#api-documentation)
-- [WebSocket Events](#websocket-events)
-- [Complete Test Flow](#complete-test-flow)
-- [Architecture](#architecture)
+- [Overview](#-overview)
+- [Features](#-features)
+- [Technology Stack](#-technology-stack)
+- [Installation](#-installation)
+- [Quick Start Testing](#-quick-start-testing)
+- [API Documentation](#-api-documentation)
+- [WebSocket Events](#-websocket-events)
+- [Complete Test Flow](#-complete-test-flow)
+- [Architecture](#-architecture)
+- [Design Notes](#-design-notes)
+- [Security Features](#-security-features)
+- [Testing](#-testing)
 
 ---
 
